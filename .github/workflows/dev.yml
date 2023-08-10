@@ -30,23 +30,17 @@ jobs:
           ref: dev
       - name: build image - AMD64
         run: |
-          docker build --rm -t croc/unimus . || { echo "docker image build failed - amd64"; exit 1; }
-          docker tag croc/unimus croc/unimus:dev
-          docker tag croc/unimus quay.io/croc/unimus:dev
-          docker images croc/unimus
+          docker build --rm -t accuris-infrastructure/unimus . || { echo "docker image build failed - amd64"; exit 1; }
+          docker tag accuris-infrastructure/unimus ghcr.io/accuris-infrastructure/unimus:dev
+          docker images accuris-infrastructure/unimus
       - name: push container
         env:
-          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-          DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
-          QUAYIO_USER: ${{ secrets.QUAYIO_USER }}
-          QUAYIO_PASS: ${{ secrets.QUAYIO_PASS }}
+          CR_PAT: ${{ secrets.CR_PAT }}
         run: |
           docker images
-          echo "$DOCKERHUB_PASS" | docker login --username=$DOCKERHUB_USER --password-stdin
-          echo "$QUAYIO_PASS" | docker login --username=$QUAYIO_USER --password-stdin quay.io
+          echo $CR_PAT | docker login ghcr.io -u accuris-infrastructure --password-stdin
           docker images | grep -i unimus
-          docker push croc/unimus:dev
-          docker push quay.io/croc/unimus:dev
+          docker push ghcr.io/accuris-infrastructure/unimus:dev
   build-arm64:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -67,21 +61,15 @@ jobs:
           ARCH: ARM
         run: |
           echo "Buildx supported platforms: ${{ steps.buildx.outputs.platforms }}"
-
-          docker build --rm --platform linux/arm64 -t croc/unimus-arm64 . || { echo "docker image build failed - arm64"; exit 1; }
-          docker tag croc/unimus-arm64 croc/unimus-arm64:dev
-          docker tag croc/unimus-arm64 quay.io/croc/unimus-arm64:dev
-          docker images croc/unimus-arm64
+          docker build --rm --platform linux/arm64 -t accuris-infrastructure/unimus-arm64 . || { echo "docker image build failed - arm64"; exit 1; }
+          docker tag accuris-infrastructure/unimus-arm64 ghcr.io/accuris-infrastructure/unimus-arm64:dev
+          docker images accuris-infrastructure/unimus-arm64
       - name: push container
         env:
-          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-          DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
-          QUAYIO_USER: ${{ secrets.QUAYIO_USER }}
-          QUAYIO_PASS: ${{ secrets.QUAYIO_PASS }}
+          CR_PAT: ${{ secrets.CR_PAT }}
         run: |
           docker images
-          echo "$DOCKERHUB_PASS" | docker login --username=$DOCKERHUB_USER --password-stdin
-          echo "$QUAYIO_PASS" | docker login --username=$QUAYIO_USER --password-stdin quay.io
+          echo $CR_PAT | docker login ghcr.io -u accuris-infrastructure --password-stdin
           docker images | grep -i unimus-arm64
-          docker push croc/unimus-arm64:dev
-          docker push quay.io/croc/unimus-arm64:dev
+          docker push ghcr.io/accuris-infrastructure/unimus-arm64:dev
+

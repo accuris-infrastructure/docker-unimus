@@ -44,15 +44,15 @@ jobs:
       - run:
           name: docker login
           command: |
-            echo $CR_PAT | sudo docker login ghcr.io -u accuris-infrastructure --password-stdin
+            echo $CR_PAT | docker login ghcr.io -u accuris-infrastructure --password-stdin
       - run:
           name: docker build arm64
           command: |
             uname -a
             cp -f /tmp/checksum/checksum.signed files/
             ls -hal files
-            sudo docker build -t $IMAGE_NAME . || { echo "Build failed"; exit 1; }
-            sudo docker inspect $IMAGE_NAME | grep -i architecture
+            docker build -t $IMAGE_NAME . || { echo "Build failed"; exit 1; }
+            docker inspect $IMAGE_NAME | grep -i architecture
       - run:
           name: check image and get version
           command: |
@@ -67,7 +67,7 @@ jobs:
       - run:
           name: docker image push
           command: |
-            sudo docker images
+            docker images
             docker tag $IMAGE_NAME ghcr.io/$IMAGE_NAME:latest || { echo "retag failed"; exit 1; }
             docker push ghcr.io/$IMAGE_NAME:latest || { echo "push failed"; exit 1; }
             VERSION=$( docker images | grep -i $IMAGE_NAME | awk '{ print $2 }' | grep -i '^[0-9]' | sort | uniq )
@@ -86,15 +86,15 @@ jobs:
       - run:
           name: docker login
           command: |
-            echo $CR_PAT | sudo docker login ghcr.io -u accuris-infrastructure --password-stdin
+            echo $CR_PAT | docker login ghcr.io -u accuris-infrastructure --password-stdin
       - run:
           name: docker build arm64
           command: |
             uname -a
             cp -f /tmp/checksum/checksum.signed files/
             ls -hal files
-            sudo docker build -t $IMAGE_NAME . || { echo "Build failed"; exit 1; }
-            sudo docker inspect $IMAGE_NAME | grep -i architecture
+            docker build -t $IMAGE_NAME . || { echo "Build failed"; exit 1; }
+            docker inspect $IMAGE_NAME | grep -i architecture
       - run:
           name: check image and get version
           command: |

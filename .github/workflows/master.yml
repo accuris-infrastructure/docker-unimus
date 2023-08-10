@@ -28,11 +28,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: build image - AMD64
         run: |
-          docker build --rm -t croc/unimus . || { echo "docker image build failed - amd64"; exit 1; }
+          docker build --rm -t accuris-infrastructure/unimus . || { echo "docker image build failed - amd64"; exit 1; }
           # create registry tag
-          docker tag croc/unimus croc/unimus
-          docker tag croc/unimus quay.io/croc/unimus
-          docker images croc/unimus
+          docker tag accuris-infrastructure/unimus ghcr.io/accuris-infrastructure/unimus
+          docker images accuris-infrastructure/unimus
       - name: check image and add version tag
         run: |
           docker-compose up -d
@@ -42,8 +41,7 @@ jobs:
           echo "Unimus core version: $UNIMUS_CORE_VERSION"
           [ -z "$UNIMUS_CORE_VERSION" ] && { echo "Unimus core version not found"; exit 1; }
           # create version tag
-          docker tag croc/unimus croc/unimus:$UNIMUS_CORE_VERSION
-          docker tag croc/unimus quay.io/croc/unimus:$UNIMUS_CORE_VERSION
+          docker tag accuris-infrastructure/unimus ghcr.io/accuris-infrastructure/unimus:$UNIMUS_CORE_VERSION
           # save version number for arm build
           echo $UNIMUS_CORE_VERSION > unimus.ver
       - name: upload artifact
@@ -53,22 +51,16 @@ jobs:
           path: unimus.ver
       - name: push container
         env:
-          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-          DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
-          QUAYIO_USER: ${{ secrets.QUAYIO_USER }}
-          QUAYIO_PASS: ${{ secrets.QUAYIO_PASS }}
+          CR_PAT: ${{ secrets.CR_PAT }}
         run: |
-          echo "$DOCKERHUB_PASS" | docker login --username=$DOCKERHUB_USER --password-stdin
-          echo "$QUAYIO_PASS" | docker login --username=$QUAYIO_USER --password-stdin quay.io
+          echo $CR_PAT | docker login ghcr.io -u accuris-infrastructure --password-stdin
           docker images | grep -iw unimus
           # push latest images
-          docker push croc/unimus
-          docker push quay.io/croc/unimus
+          docker push ghcr.io/accuris-infrastructure/unimus
           # push version tag
-          VERSION=$( docker images | grep -i croc/unimus | awk '{ print $2 }' | grep -i '^[0-9]' | sort | uniq )
+          VERSION=$( docker images | grep -i accuris-infrastructure/unimus | awk '{ print $2 }' | grep -i '^[0-9]' | sort | uniq )
           echo "Image version: $VERSION"
-          docker push croc/unimus:$VERSION || { echo "version ($VERSION) image push error"; exit 1; }
-          docker push quay.io/croc/unimus:$VERSION || { echo "version ($VERSION) image push error"; exit 1; }
+          docker push ghcr.io/accuris-infrastructure/unimus:$VERSION || { echo "version ($VERSION) image push error"; exit 1; }
   build-arm64:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -89,10 +81,9 @@ jobs:
           ARCH: ARM
         run: |
           echo "Buildx supported platforms: ${{ steps.buildx.outputs.platforms }}"
-          docker build --rm --platform linux/arm64 -t croc/unimus-arm64 . || { echo "docker image build failed - arm64"; exit 1; }
-          docker tag croc/unimus-arm64 croc/unimus-arm64
-          docker tag croc/unimus-arm64 quay.io/croc/unimus-arm64
-          docker images croc/unimus-arm64
+          docker build --rm --platform linux/arm64 -t accuris-infrastructure/unimus-arm64 . || { echo "docker image build failed - arm64"; exit 1; }
+          docker tag accuris-infrastructure/unimus-arm64 ghcr.io/accuris-infrastructure/unimus-arm64
+          docker images accuris-infrastructure/unimus-arm64
       - uses: actions/checkout@v3
       - name: download artifact
         uses: actions/download-artifact@v3
@@ -104,23 +95,16 @@ jobs:
           echo "Unimus core version (from file): $UNIMUS_CORE_VERSION"
           [ -z "$UNIMUS_CORE_VERSION" ] && { echo "Unimus core version not found for arm64 retag"; exit 1; }
           # create version tag
-          docker tag croc/unimus-arm64 croc/unimus-arm64:$UNIMUS_CORE_VERSION
-          docker tag croc/unimus-arm64 quay.io/croc/unimus-arm64:$UNIMUS_CORE_VERSION
+          docker tag accuris-infrastructure/unimus-arm64 ghcr.io/accuris-infrastructure/unimus-arm64:$UNIMUS_CORE_VERSION
       - name: push container
         env:
-          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-          DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
-          QUAYIO_USER: ${{ secrets.QUAYIO_USER }}
-          QUAYIO_PASS: ${{ secrets.QUAYIO_PASS }}
+          CR_PAT: ${{ secrets.CR_PAT }}
         run: |
-          echo "$DOCKERHUB_PASS" | docker login --username=$DOCKERHUB_USER --password-stdin
-          echo "$QUAYIO_PASS" | docker login --username=$QUAYIO_USER --password-stdin quay.io
+          echo $CR_PAT | docker login ghcr.io -u accuris-infrastructure --password-stdin
           docker images | grep -iw unimus-arm64
           # push latest images
-          docker push croc/unimus-arm64
-          docker push quay.io/croc/unimus-arm64
+          docker push ghcr.io/accuris-infrastructure/unimus-arm64
           # push version tag
-          VERSION=$( docker images | grep -i croc/unimus-arm64 | awk '{ print $2 }' | grep -i '^[0-9]' | sort | uniq )
+          VERSION=$( docker images | grep -i accuris-infrastructure/unimus-arm64 | awk '{ print $2 }' | grep -i '^[0-9]' | sort | uniq )
           echo "Image version: $VERSION"
-          docker push croc/unimus-arm64:$VERSION || { echo "version ($VERSION) image push error - arm64"; exit 1; }
-          docker push quay.io/croc/unimus-arm64:$VERSION || { echo "version ($VERSION) image push error - arm64"; exit 1; }
+          docker push ghcr.io/accuris-infrastructure/unimus-arm64:$VERSION || { echo "version ($VERSION) image push error - arm64"; exit 1; }
